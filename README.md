@@ -38,3 +38,4 @@ jobs:
 ## Real World Example
 
 - [CunnyDev/saltyaom](https://github.com/CunnyDev/saltyaom/blob/main/.github/workflows/177013.yml)
+- [CunnyDev/goragit-177013](https://github.com/CunnyDev/goragit-177013)
