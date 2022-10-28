@@ -31,6 +31,9 @@ git-email: ${gitEmail}`);
   const currentTitle = await getExec("git log -1 --pretty=%s");
   const currentDescription = await getExec("git log -1 --pretty=%b");
 
+  const authorName = await getExec("git log -1 --pretty=%an");
+  const authorEmail = await getExec("git log -1 --pretty=%ae");
+
   await exec("git reset --soft HEAD~1");
 
   const previousTitle = await getExec("git log -1 --pretty=%s");
@@ -44,7 +47,9 @@ git-email: ${gitEmail}`);
   const { body: pBody, coAuthors: pCoAuth } =
     parseDescription(previousDescription);
 
-  const coAuthors = [...new Set([...cCoAuth, ...pCoAuth])];
+  const coAuthors = [
+    ...new Set([`${authorName} <${authorEmail}>`, ...cCoAuth, ...pCoAuth]),
+  ];
 
   const body = `${cBody}\n${previousTitle}\n${pBody}`;
 
