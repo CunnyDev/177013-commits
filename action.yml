@@ -1,0 +1,23 @@
+name: "177013 Commits"
+description: "Pin the commit count to be 177013"
+author: "Cunny Developer"
+
+inputs:
+  commits:
+    description: "The number of commits to pin to"
+    required: false
+    default: 177013
+
+  git-name:
+    description: "Git Author's name"
+    required: false
+    default: "github-actions"
+
+  git-email:
+    description: "Git Author's email"
+    required: false
+    default: "41898282+github-actions[bot]@users.noreply.github.com"
+
+runs:
+  using: "node16"
+  main: "dist/index.js"
