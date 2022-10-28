@@ -67,7 +67,7 @@ git-email: ${gitEmail}`);
         yield (0, utils_1.exec)("git reset --soft HEAD~1");
         const allAuthors = current.authors;
         let body = current.body;
-        for (let i = 0; i < commits - commitCount; i++) {
+        for (let i = 0; i < commitCount - commits; i++) {
             const now = yield (0, utils_1.getCommitInfo)();
             yield (0, utils_1.exec)("git reset --soft HEAD~1");
             body += `\n${now.title}\n${now.body}`;
@@ -79,7 +79,7 @@ git-email: ${gitEmail}`);
 ${body}
 
 
-${coAuthors.map((c) => `Co-authored-by: ${c}`).join("\n")}"`);
+${coAuthors.map((c) => `Co-authored-by: ${c}`).join("\n")}" --allow-empty`);
         yield (0, utils_1.exec)(`git push -f`);
     });
 }

@@ -10,10 +10,10 @@ on:
     branches:
       - main
     paths-ignore:
-      - '**.md'
+      - "**.md"
   pull_request:
     paths-ignore:
-      - '**.md'
+      - "**.md"
   workflow_dispatch:
 
 jobs:
@@ -23,18 +23,24 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      - name: Set Node.js 16.x
-        uses: actions/setup-node@v3.5.1
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
         with:
-          node-version: 16.x
+          version: 7
 
-      - name: Install dependencies
-        run: npm ci
+      - name: Setup node with cache
+        uses: actions/setup-node@v3
+        with:
+          node-version: 16
+          cache: pnpm
+
+      - name: Install Dependencies
+        run: pnpm install --frozen-lockfile
 
       - name: Rebuild the dist/ directory
         run: |
-          npm run build
-          npm run package
+          pnpm build
+          pnpm package
 
       - name: Compare the expected and actual dist/ directories
         run: |
@@ -51,3 +57,6 @@ jobs:
         with:
           name: dist
           path: dist/
+
+      - name: Run test because I'm lazy to separate actions
+        run: pnpm test

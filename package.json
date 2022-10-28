@@ -9,7 +9,8 @@
     "format": "prettier --write '**/*.ts'",
     "lint": "eslint src/**/*.ts",
     "package": "ncc build --source-map --license licenses.txt",
-    "all": "pnpm run build && pnpm run format && pnpm run lint && pnpm run package"
+    "all": "pnpm build && pnpm format && pnpm lint && pnpm test && pnpm package",
+    "test": "vitest --run"
   },
   "repository": {
     "type": "git",
@@ -36,6 +37,7 @@
     "js-yaml": "^4.1.0",
     "prettier": "2.7.1",
     "ts-jest": "^29.0.3",
-    "typescript": "^4.8.4"
+    "typescript": "^4.8.4",
+    "vitest": "^0.24.3"
   }
 }
