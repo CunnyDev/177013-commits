@@ -1,6 +1,6 @@
 {
   "name": "@cunnydev/177013-commits",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "private": true,
   "description": "Pin the commit count to be 177013",
   "main": "lib/main.js",

@@ -60,28 +60,32 @@ git-email: ${gitEmail}`);
             core.error("Invalid commit count, probably git not found");
         }
         if (commitCount <= commits) {
-            core.info("Commit count is less than or equal to the input, skipping");
+            core.info("Commit count is less than or equal to the input, we cannot do anything with it. Spam commit until it reach that amount!");
             return 0;
         }
         const currentTitle = yield (0, utils_1.getExec)("git log -1 --pretty=%s");
         const currentDescription = yield (0, utils_1.getExec)("git log -1 --pretty=%b");
+        const { body: cBody, coAuthors: cCoAuth } = (0, utils_1.parseDescription)(currentDescription);
         const authorName = yield (0, utils_1.getExec)("git log -1 --pretty=%an");
         const authorEmail = yield (0, utils_1.getExec)("git log -1 --pretty=%ae");
         yield (0, utils_1.exec)("git reset --soft HEAD~1");
-        const previousTitle = yield (0, utils_1.getExec)("git log -1 --pretty=%s");
-        const previousDescription = yield (0, utils_1.getExec)("git log -1 --pretty=%b");
-        yield (0, utils_1.exec)("git reset --soft HEAD~1");
-        const { body: cBody, coAuthors: cCoAuth } = (0, utils_1.parseDescription)(currentDescription);
-        const { body: pBody, coAuthors: pCoAuth } = (0, utils_1.parseDescription)(previousDescription);
-        const coAuthors = [
-            ...new Set([`${authorName} <${authorEmail}>`, ...cCoAuth, ...pCoAuth]),
-        ];
-        const body = `${cBody}\n${previousTitle}\n${pBody}`;
+        const coAuthors = [`${authorName} <${authorEmail}>`, ...cCoAuth];
+        let body = cBody;
+        for (let i = 0; i < commits - commitCount; i++) {
+            const title = yield (0, utils_1.getExec)("git log -1 --pretty=%s");
+            const description = yield (0, utils_1.getExec)("git log -1 --pretty=%b");
+            yield (0, utils_1.exec)("git reset --soft HEAD~1");
+            const { body: pBody, coAuthors: pCoAuthors } = (0, utils_1.parseDescription)(description);
+            body += `\n${title}\n${pBody}`;
+            coAuthors.push(...pCoAuthors);
+        }
         yield (0, utils_1.exec)(`git commit -m "${currentTitle}
 ${body}
 
 
-${coAuthors.map((c) => `Co-authored-by: ${c}`).join("\n")}"`);
+${[...new Set([...coAuthors])]
+            .map((c) => `Co-authored-by: ${c}`)
+            .join("\n")}"`);
         yield (0, utils_1.exec)(`git push -f`);
     });
 }
