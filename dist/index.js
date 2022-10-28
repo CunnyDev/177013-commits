@@ -63,29 +63,23 @@ git-email: ${gitEmail}`);
             core.info("Commit count is less than or equal to the input, we cannot do anything with it. Spam commit until it reach that amount!");
             return 0;
         }
-        const currentTitle = yield (0, utils_1.getExec)("git log -1 --pretty=%s");
-        const currentDescription = yield (0, utils_1.getExec)("git log -1 --pretty=%b");
-        const { body: cBody, coAuthors: cCoAuth } = (0, utils_1.parseDescription)(currentDescription);
-        const authorName = yield (0, utils_1.getExec)("git log -1 --pretty=%an");
-        const authorEmail = yield (0, utils_1.getExec)("git log -1 --pretty=%ae");
+        const current = yield (0, utils_1.getCommitInfo)();
         yield (0, utils_1.exec)("git reset --soft HEAD~1");
-        const coAuthors = [`${authorName} <${authorEmail}>`, ...cCoAuth];
-        let body = cBody;
+        const allAuthors = current.authors;
+        let body = current.body;
         for (let i = 0; i < commits - commitCount; i++) {
-            const title = yield (0, utils_1.getExec)("git log -1 --pretty=%s");
-            const description = yield (0, utils_1.getExec)("git log -1 --pretty=%b");
+            const now = yield (0, utils_1.getCommitInfo)();
             yield (0, utils_1.exec)("git reset --soft HEAD~1");
-            const { body: pBody, coAuthors: pCoAuthors } = (0, utils_1.parseDescription)(description);
-            body += `\n${title}\n${pBody}`;
-            coAuthors.push(...pCoAuthors);
+            body += `\n${now.title}\n${now.body}`;
+            allAuthors.push(...now.authors);
         }
-        yield (0, utils_1.exec)(`git commit -m "${currentTitle}
+        const coAuthors = [...new Set(allAuthors)];
+        core.info(JSON.stringify({ body, coAuthors }, null, 2));
+        yield (0, utils_1.exec)(`git commit -m "${current.title}
 ${body}
 
 
-${[...new Set([...coAuthors])]
-            .map((c) => `Co-authored-by: ${c}`)
-            .join("\n")}"`);
+${coAuthors.map((c) => `Co-authored-by: ${c}`).join("\n")}"`);
         yield (0, utils_1.exec)(`git push -f`);
     });
 }
@@ -134,14 +128,14 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", ({ value: true }));
-exports.parseDescription = exports.Input = exports.getExec = exports.exec = void 0;
+exports.getCommitInfo = exports.parseDescription = exports.Input = exports.getExec = exports.exec = void 0;
 const core = __importStar(__nccwpck_require__(954));
 const node_child_process_1 = __nccwpck_require__(718);
 const node_util_1 = __nccwpck_require__(261);
 const execBase = (0, node_util_1.promisify)(node_child_process_1.exec);
 function exec(cmd) {
     return __awaiter(this, void 0, void 0, function* () {
-        core.info(`Executing: ${cmd}`);
+        core.info(`Executing: ${cmd.includes("\n") ? `\n=====${cmd}\n=====` : cmd}`);
         return yield execBase(cmd);
     });
 }
@@ -169,6 +163,21 @@ function parseDescription(desc) {
     };
 }
 exports.parseDescription = parseDescription;
+function getCommitInfo() {
+    return __awaiter(this, void 0, void 0, function* () {
+        const title = yield getExec("git log -1 --pretty=%s");
+        const description = yield getExec("git log -1 --pretty=%b");
+        const { body, coAuthors } = parseDescription(description);
+        const authorName = yield getExec("git log -1 --pretty=%an");
+        const authorEmail = yield getExec("git log -1 --pretty=%ae");
+        return {
+            authors: [`${authorName} <${authorEmail}>`, ...coAuthors],
+            title,
+            body,
+        };
+    });
+}
+exports.getCommitInfo = getCommitInfo;
 
 
 /***/ }),

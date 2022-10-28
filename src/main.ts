@@ -1,5 +1,5 @@
 import * as core from "@actions/core";
-import { Input, exec, getExec, parseDescription } from "./utils";
+import { Input, exec, getExec, getCommitInfo } from "./utils";
 
 async function run() {
   const commits = +core.getInput(Input.Commits);
@@ -30,40 +30,29 @@ git-email: ${gitEmail}`);
     return 0;
   }
 
-  const currentTitle = await getExec("git log -1 --pretty=%s");
-  const currentDescription = await getExec("git log -1 --pretty=%b");
-
-  const { body: cBody, coAuthors: cCoAuth } =
-    parseDescription(currentDescription);
-
-  const authorName = await getExec("git log -1 --pretty=%an");
-  const authorEmail = await getExec("git log -1 --pretty=%ae");
-
+  const current = await getCommitInfo();
   await exec("git reset --soft HEAD~1");
 
-  const coAuthors = [`${authorName} <${authorEmail}>`, ...cCoAuth];
-  let body = cBody;
+  const allAuthors = current.authors;
+  let body = current.body;
 
   for (let i = 0; i < commits - commitCount; i++) {
-    const title = await getExec("git log -1 --pretty=%s");
-    const description = await getExec("git log -1 --pretty=%b");
-
+    const now = await getCommitInfo();
     await exec("git reset --soft HEAD~1");
 
-    const { body: pBody, coAuthors: pCoAuthors } =
-      parseDescription(description);
-
-    body += `\n${title}\n${pBody}`;
-    coAuthors.push(...pCoAuthors);
+    body += `\n${now.title}\n${now.body}`;
+    allAuthors.push(...now.authors);
   }
 
-  await exec(`git commit -m "${currentTitle}
+  const coAuthors = [...new Set(allAuthors)];
+
+  core.info(JSON.stringify({ body, coAuthors }, null, 2));
+
+  await exec(`git commit -m "${current.title}
 ${body}
 
 
-${[...new Set([...coAuthors])]
-  .map((c) => `Co-authored-by: ${c}`)
-  .join("\n")}"`);
+${coAuthors.map((c) => `Co-authored-by: ${c}`).join("\n")}"`);
 
   await exec(`git push -f`);
 }
